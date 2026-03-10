@@ -1,1 +1,0 @@
-import{j as n,m as o}from"./index-DBzvEszy.js";function r({children:i,className:t="",id:e}){return n.jsx(o.section,{id:e,className:t,initial:{opacity:0,y:24},whileInView:{opacity:1,y:0},viewport:{once:!0,margin:"-80px"},transition:{duration:.6,ease:"easeOut"},children:i})}export{r as A};

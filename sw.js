@@ -1,1 +1,44 @@
-if(!self.define){let s,e={};const i=(i,n)=>(i=new URL(i+".js",n).href,e[i]||new Promise(e=>{if("document"in self){const s=document.createElement("script");s.src=i,s.onload=e,document.head.appendChild(s)}else s=i,importScripts(i),e()}).then(()=>{let s=e[i];if(!s)throw new Error(`Module ${i} didn’t register its module`);return s}));self.define=(n,r)=>{const l=s||("document"in self?document.currentScript.src:"")||location.href;if(e[l])return;let o={};const t=s=>i(s,l),u={module:{uri:l},exports:o,require:t};e[l]=Promise.all(n.map(s=>u[s]||t(s))).then(s=>(r(...s),o))}}define(["./workbox-77cfed3d"],function(s){"use strict";self.skipWaiting(),s.clientsClaim(),s.precacheAndRoute([{url:"index.html",revision:"8ad2132495f342eba82bacc521a19a23"},{url:"assets/workbox-window.prod.es5-CU9ER5ry.js",revision:null},{url:"assets/twitter-B_kiz-G5.js",revision:null},{url:"assets/stegaEncodeSourceMap-Bu0-TJfm.js",revision:null},{url:"assets/sanity-CWYzJmUZ.js",revision:null},{url:"assets/projectsData-D24X66og.js",revision:null},{url:"assets/ProjectDetail-Ba1yS7n3.js",revision:null},{url:"assets/PageWrapper-PPbq3cUK.js",revision:null},{url:"assets/NotFound-CDy-AgV3.js",revision:null},{url:"assets/index-iG1I1a0f.css",revision:null},{url:"assets/index-DBzvEszy.js",revision:null},{url:"assets/Home-DHVO9PDZ.js",revision:null},{url:"assets/browser-Cs93UAMF.js",revision:null},{url:"assets/BlogDetail-CdsWWH98.js",revision:null},{url:"assets/AnimatedSection-Ca8aDzez.js",revision:null},{url:"apple-touch-icon.png",revision:"cad9d797aa5f9d26cfa20c01b4fdb06d"},{url:"pwa-192x192.png",revision:"a971015105694328e84cfa8d25c4811e"},{url:"pwa-512x512.png",revision:"cad9d797aa5f9d26cfa20c01b4fdb06d"},{url:"manifest.webmanifest",revision:"42b5643cfb8f7c1b6fc8553f1c289636"}],{}),s.cleanupOutdatedCaches(),s.registerRoute(new s.NavigationRoute(s.createHandlerBoundToURL("index.html")))});
+/**
+ * Self-destructing Service Worker
+ * This SW replaces any old cached SW and immediately:
+ * 1. Clears ALL cache storage
+ * 2. Unregisters itself
+ * 3. Forces a page reload so users get fresh content
+ */
+
+self.addEventListener('install', function(event) {
+  // Skip waiting so this SW activates immediately
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(
+    // Delete every cache bucket
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          console.log('[SW] Deleting cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(function() {
+      // Take control of all open tabs
+      return self.clients.claim();
+    }).then(function() {
+      // Tell all clients to reload so they get fresh HTML + assets
+      return self.clients.matchAll({ type: 'window' }).then(function(clients) {
+        clients.forEach(function(client) {
+          client.postMessage({ type: 'SW_CACHE_CLEARED' });
+        });
+      });
+    }).then(function() {
+      // Unregister this SW so it doesn't interfere in future
+      return self.registration.unregister();
+    })
+  );
+});
+
+// Never intercept network requests — always go to network
+self.addEventListener('fetch', function(event) {
+  // Passthrough: no caching at all
+});
