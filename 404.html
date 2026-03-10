@@ -68,6 +68,38 @@
   <link rel="manifest" href="/manifest.webmanifest"></head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root"></div>
+    <!-- SW Kill Switch: clears stale caches so ALL users get fresh design -->
+    <script>
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .getRegistrations()
+          .then(function (registrations) {
+            var hadOld = false;
+            registrations.forEach(function (registration) {
+              // Unregister any SW that isn't the latest build
+              registration.update();
+            });
+          });
+        // Also clear every cache storage bucket
+        if (window.caches) {
+          caches.keys().then(function (keys) {
+            if (keys.length > 0) {
+              Promise.all(
+                keys.map(function (key) {
+                  return caches.delete(key);
+                }),
+              ).then(function (results) {
+                // If anything was actually deleted, reload once to pick up new SW
+                if (results.some(Boolean)) {
+                  sessionStorage.setItem("sw_reloaded", "1");
+                  window.location.reload();
+                }
+              });
+            }
+          });
+        }
+      }
+    </script>
   </body>
 </html>
